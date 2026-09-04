@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FeedbackHub - Secure Admin Portal & API Key Manager</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Ambient Glow Background -->
+  <div class="ambient-glow"></div>
+
+  <!-- =========================================================================
+       1. LOGIN SECTION (Secure Server-Side Authenticated)
+       ========================================================================= -->
+  <section id="login-section" class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <h2 class="login-title">FeedbackHub Admin</h2>
+        <p class="login-subtitle">Sign in to manage reviews, analytics & API keys</p>
+      </div>
+
+      <!-- Error Alert -->
+      <div id="login-error-alert" class="alert alert-danger" style="display: none;">
+        <i data-lucide="alert-circle"></i>
+        <span id="login-error-text">Invalid credentials. Access denied.</span>
+      </div>
+
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-email">Admin Email</label>
+          <div class="input-container">
+            <input 
+              type="email" 
+              id="login-email" 
+              class="form-input" 
+              placeholder="admin@feedbackhub.com" 
+              value="admin@feedbackhub.com"
+              required 
+              autocomplete="username"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Master Password</label>
+          <div class="input-container">
+            <input 
+              type="password" 
+              id="login-password" 
+              class="form-input" 
+              placeholder="••••••••••••••••" 
+              required 
+              autocomplete="current-password"
+            >
+            <button type="button" id="toggle-password-btn" class="input-icon-btn" title="Toggle visibility">
+              <i data-lucide="eye" id="pwd-eye-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block">
+          <i data-lucide="log-in"></i>
+          <span>Authenticate & Enter</span>
+        </button>
+      </form>
+
+      <div class="security-badge">
+        <i data-lucide="lock"></i>
+        <span>
+          <strong>Zero-Exposure Security</strong>: Passwords are encrypted server-side with PBKDF2-HMAC-SHA256. Not visible in page code.
+        </span>
+      </div>
+
+      <div style="margin-top: 1rem; font-size: 0.78rem; color: var(--text-muted); text-align: center;">
+        Default Demo Pass: <code style="color: #a5b4fc; background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px;">Admin@2026!SecureKey</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       2. ADMIN DASHBOARD SHELL
+       ========================================================================= -->
+  <div id="dashboard-shell" class="app-container" style="display: none;">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">F</div>
+        <div class="brand-text">
+          <h1>FeedbackHub</h1>
+          <span>Admin Portal</span>
+        </div>
+      </div>
+
+      <ul class="nav-list">
+        <li>
+          <a class="nav-link active" data-tab="tab-overview">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Overview & Stats</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="tab-inbox">
+            <i data-lucide="inbox"></i>
+            <span>Feedback Inbox</span>
+            <span id="inbox-badge-count" style="margin-left: auto; font-size: 0.72rem; background: var(--accent-primary); padding: 2px 7px; border-radius: 999px; font-weight: 700;">0</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="tab-keys">
+            <i data-lucide="key"></i>
+            <span>API Keys & Integration</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="tab-security">
+            <i data-lucide="shield"></i>
+            <span>Security Settings</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar" id="sidebar-user-avatar">A</div>
+          <div class="user-info">
+            <div class="user-email" id="sidebar-user-email">admin@feedbackhub.com</div>
+            <div class="user-role">Super Admin</div>
+          </div>
+        </div>
+        <button id="admin-logout-btn" class="btn btn-secondary btn-block" style="padding: 0.5rem; font-size: 0.85rem;">
+          <i data-lucide="log-out"></i>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Action Bar -->
+      <div class="top-bar">
+        <div class="page-heading">
+          <h2 id="top-bar-title">Overview & Analytics</h2>
+          <p id="top-bar-desc">Real-time performance metrics and customer feedback breakdown</p>
+        </div>
+        <div class="top-actions">
+          <button id="refresh-data-btn" class="btn btn-secondary" title="Refresh data">
+            <i data-lucide="refresh-cw"></i>
+            <span>Refresh</span>
+          </button>
+          <button id="seed-sample-btn" class="btn btn-secondary" title="Add quick sample review">
+            <i data-lucide="plus-circle"></i>
+            <span>Add Test Feedback</span>
+          </button>
+          <a href="/demo-client.html" target="_blank" class="btn btn-primary" title="Open demo client website">
+            <i data-lucide="external-link"></i>
+            <span>Open Demo Client</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- TAB 1: OVERVIEW & ANALYTICS -->
+      <div id="tab-overview" class="tab-panel active">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-label">Total Submissions</span>
+              <div class="kpi-icon indigo"><i data-lucide="message-square"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-total-feedback">0</div>
+            <div class="kpi-subtext">
+              <i data-lucide="check-circle-2" style="width: 14px; color: var(--status-success);"></i>
+              <span>All recorded feedback</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-label">Average Rating</span>
+              <div class="kpi-icon amber"><i data-lucide="star"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-avg-rating">0.0</div>
+            <div class="kpi-subtext">
+              <span id="kpi-rating-stars" class="star-rating">★★★★★</span>
+              <span>out of 5 stars</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-label">Positive Sentiment</span>
+              <div class="kpi-icon emerald"><i data-lucide="smile"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-positive-pct">0%</div>
+            <div class="kpi-subtext">
+              <span>Ratings with 4 or 5 stars</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-label">Requires Review</span>
+              <div class="kpi-icon blue"><i data-lucide="clock"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-pending-count">0</div>
+            <div class="kpi-subtext">
+              <span>Status marked as 'New'</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Distribution Breakdown -->
+        <div class="charts-grid">
+          <!-- Rating Star Distribution -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <h3>Rating Distribution</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">1 to 5 Stars</span>
+            </div>
+            <div id="rating-bars-container">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Category Breakdown -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <h3>By Category</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Classification</span>
+            </div>
+            <div class="category-stats-list" id="category-stats-container">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Quick Table -->
+        <div class="content-card">
+          <div class="card-title-bar">
+            <h3>Recent Submissions</h3>
+            <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="switchTab('tab-inbox')">
+              View All in Inbox →
+            </button>
+          </div>
+          <div id="recent-feedback-container">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: FEEDBACK INBOX -->
+      <div id="tab-inbox" class="tab-panel">
+        <!-- Toolbar & Filters -->
+        <div class="filter-toolbar">
+          <div class="search-input-group">
+            <i data-lucide="search"></i>
+            <input type="text" id="feedback-search-input" class="form-input" placeholder="Search by user, message, email...">
+          </div>
+
+          <div class="filter-selects">
+            <select id="filter-rating" class="select-dropdown">
+              <option value="">All Ratings (★)</option>
+              <option value="5">5 Stars only</option>
+              <option value="4">4 Stars only</option>
+              <option value="3">3 Stars only</option>
+              <option value="2">2 Stars only</option>
+              <option value="1">1 Star only</option>
+            </select>
+
+            <select id="filter-status" class="select-dropdown">
+              <option value="all">All Statuses</option>
+              <option value="new">New / Unread</option>
+              <option value="reviewing">Under Review</option>
+              <option value="resolved">Resolved</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            <select id="filter-category" class="select-dropdown">
+              <option value="all">All Categories</option>
+              <option value="Praise">Praise</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Bug Report">Bug Report</option>
+              <option value="UX / Usability">UX / Usability</option>
+              <option value="General">General</option>
+            </select>
+
+            <button id="export-csv-btn" class="btn btn-secondary" title="Export as CSV">
+              <i data-lucide="download"></i>
+              <span>CSV</span>
+            </button>
+            <button id="export-json-btn" class="btn btn-secondary" title="Export as JSON">
+              <i data-lucide="file-json"></i>
+              <span>JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+          <table class="feedback-table">
+            <thead>
+              <tr>
+                <th style="width: 190px;">Customer</th>
+                <th style="width: 100px;">Rating</th>
+                <th style="width: 140px;">Category</th>
+                <th>Feedback Message</th>
+                <th style="width: 120px;">Status</th>
+                <th style="width: 110px;">Date</th>
+                <th style="width: 90px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="feedback-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+          <div id="table-empty-state" style="display: none; padding: 3rem; text-align: center; color: var(--text-muted);">
+            <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 0.75rem; opacity: 0.5;"></i>
+            <p style="font-size: 1.05rem; font-weight: 500;">No feedback entries found</p>
+            <p style="font-size: 0.85rem;">Try clearing your filters or submit a new feedback from the demo client.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: API KEYS & INTEGRATIONS -->
+      <div id="tab-keys" class="tab-panel">
+        <div class="api-keys-grid">
+          
+          <!-- Key List Card -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <div>
+                <h3>Active API Keys</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                  API keys authorize your client websites and applications to submit feedback directly into this portal.
+                </p>
+              </div>
+              <button id="open-generate-key-modal-btn" class="btn btn-primary">
+                <i data-lucide="plus"></i>
+                <span>Generate New Key</span>
+              </button>
+            </div>
+
+            <div id="api-keys-list-container">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <!-- Integration Guides & Code Snippets -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <div>
+                <h3>Connect Your Website</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                  Use one of the integration options below to embed or connect feedback directly into your product.
+                </p>
+              </div>
+            </div>
+
+            <!-- Snippet Option 1: 1-Line Embed Widget -->
+            <div style="margin-bottom: 2rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 600; color: #a5b4fc; margin-bottom: 0.35rem;">
+                Option 1: Drop-In Floating Widget (Recommended)
+              </h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Paste this single script tag right before the closing <code>&lt;/body&gt;</code> tag on any webpage. A floating feedback button and modal will automatically appear!
+              </p>
+              <div class="code-snippet-box">
+                <button class="code-copy-btn" onclick="copySnippet('embed-code-snippet')">Copy Code</button>
+                <pre id="embed-code-snippet"></pre>
+              </div>
+            </div>
+
+            <!-- Snippet Option 2: REST API with fetch() -->
+            <div style="margin-bottom: 2rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 600; color: #a5b4fc; margin-bottom: 0.35rem;">
+                Option 2: JavaScript REST API (Custom Forms)
+              </h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Submit user reviews programmatically from your own custom forms or React/Vue components.
+              </p>
+              <div class="code-snippet-box">
+                <button class="code-copy-btn" onclick="copySnippet('fetch-code-snippet')">Copy Code</button>
+                <pre id="fetch-code-snippet"></pre>
+              </div>
+            </div>
+
+            <!-- Snippet Option 3: cURL Request -->
+            <div>
+              <h4 style="font-size: 0.95rem; font-weight: 600; color: #a5b4fc; margin-bottom: 0.35rem;">
+                Option 3: cURL Command
+              </h4>
+              <div class="code-snippet-box">
+                <button class="code-copy-btn" onclick="copySnippet('curl-code-snippet')">Copy Code</button>
+                <pre id="curl-code-snippet"></pre>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 4: SECURITY SETTINGS -->
+      <div id="tab-security" class="tab-panel">
+        <div class="charts-grid">
+          
+          <!-- Change Password Card -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <div>
+                <h3>Change Admin Password</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                  Update the master administrator credentials.
+                </p>
+              </div>
+            </div>
+
+            <div id="change-pwd-alert" class="alert" style="display: none;"></div>
+
+            <form id="change-password-form">
+              <div class="form-group">
+                <label class="form-label" for="current-pwd">Current Password</label>
+                <input type="password" id="current-pwd" class="form-input" placeholder="Current password" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="new-pwd">New Strong Password</label>
+                <input type="password" id="new-pwd" class="form-input" placeholder="Min. 8 characters" required minlength="8">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="confirm-pwd">Confirm New Password</label>
+                <input type="password" id="confirm-pwd" class="form-input" placeholder="Re-type new password" required minlength="8">
+              </div>
+
+              <button type="submit" class="btn btn-primary">
+                <i data-lucide="key-round"></i>
+                <span>Update Password</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Security Architecture Information -->
+          <div class="content-card">
+            <div class="card-title-bar">
+              <h3>Security Specifications</h3>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.88rem; color: var(--text-secondary);">
+              <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 600; color: #fff; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <i data-lucide="shield-check" style="width: 16px; color: var(--status-success);"></i>
+                  Zero Client-Side Leaks
+                </div>
+                The administrator password does not exist in any client-side JavaScript, HTML, or stylesheet. Inspecting page source reveals nothing.
+              </div>
+
+              <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 600; color: #fff; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <i data-lucide="hash" style="width: 16px; color: #a5b4fc;"></i>
+                  PBKDF2-HMAC-SHA256 Hashing
+                </div>
+                Stored credentials use 300,000 hashing iterations combined with a cryptographically secure 128-bit random salt per account.
+              </div>
+
+              <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-weight: 600; color: #fff; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <i data-lucide="key" style="width: 16px; color: #fbbf24;"></i>
+                  Decoupled API Key Model
+                </div>
+                Client websites submit feedback using scoped API keys (`fbk_live_...`), isolating public submissions from administrative controls.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- =========================================================================
+       3. MODALS
+       ========================================================================= -->
+
+  <!-- Feedback Detail Modal -->
+  <div id="feedback-detail-modal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Feedback Inspection</h3>
+        <button class="modal-close-btn" onclick="closeModal('feedback-detail-modal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="feedback-detail-body">
+        <!-- Rendered via JS -->
+      </div>
+      <div class="modal-footer">
+        <a id="modal-reply-btn" href="#" class="btn btn-secondary">
+          <i data-lucide="mail"></i>
+          <span>Reply to User</span>
+        </a>
+        <button id="modal-delete-btn" class="btn btn-danger">
+          <i data-lucide="trash-2"></i>
+          <span>Delete Entry</span>
+        </button>
+        <button class="btn btn-primary" onclick="saveFeedbackDetails()">
+          <i data-lucide="save"></i>
+          <span>Save Changes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate API Key Modal -->
+  <div id="generate-key-modal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate New API Key</h3>
+        <button class="modal-close-btn" onclick="closeModal('generate-key-modal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="new-key-name">Key Label / Website Name</label>
+          <input type="text" id="new-key-name" class="form-input" placeholder="e.g. Production Landing Page" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('generate-key-modal')">Cancel</button>
+        <button id="submit-generate-key-btn" class="btn btn-primary">
+          <i data-lucide="plus"></i>
+          <span>Create Key</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App JavaScript -->
+  <script src="js/admin.js"></script>
+</body>
+</html>

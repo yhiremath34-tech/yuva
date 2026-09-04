@@ -1,0 +1,17 @@
+# Database & Local Runtime Data
+feedback.db
+*.db
+*.sqlite3
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment & Credentials
+.env
+.env.local
+
+# OS Metadata
+Thumbs.db
+.DS_Store
