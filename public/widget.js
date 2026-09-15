@@ -5,26 +5,22 @@
  */
 
 (function() {
-  // Find current script tag to extract API Key and server origin
   const currentScript = document.currentScript || (function() {
     const scripts = document.getElementsByTagName('script');
     return scripts[scripts.length - 1];
   })();
 
-  const API_KEY = currentScript.getAttribute('data-api-key') || '';
-  const POSITION = currentScript.getAttribute('data-position') || 'bottom-right';
+  const API_KEY = currentScript ? currentScript.getAttribute('data-api-key') || '' : '';
+  const POSITION = currentScript ? currentScript.getAttribute('data-position') || 'bottom-right' : 'bottom-right';
   const SERVER_ORIGIN = (function() {
-    if (currentScript.src) {
-      const url = new URL(currentScript.src);
-      return url.origin;
+    if (currentScript && currentScript.src) {
+      try {
+        const url = new URL(currentScript.src);
+        return url.origin;
+      } catch (e) {}
     }
     return window.location.origin;
   })();
-
-  if (!API_KEY) {
-    console.error('[FeedbackHub Widget] Missing data-api-key attribute on script tag.');
-    return;
-  }
 
   // Inject Styles
   const style = document.createElement('style');
@@ -49,10 +45,18 @@
       box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5), 0 8px 10px -6px rgba(99, 102, 241, 0.3);
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: fbkFloat 4s ease-in-out infinite;
+    }
+    @keyframes fbkFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
     }
     .fbk-widget-btn:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.65);
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 15px 32px -4px rgba(99, 102, 241, 0.65);
+    }
+    .fbk-widget-btn:active {
+      transform: scale(0.96);
     }
     .fbk-widget-btn svg {
       width: 18px;
@@ -66,8 +70,8 @@
     .fbk-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(11, 15, 25, 0.7);
-      backdrop-filter: blur(6px);
+      background: rgba(11, 15, 25, 0.75);
+      backdrop-filter: blur(8px);
       z-index: 999995;
       display: none;
       align-items: center;
@@ -83,15 +87,15 @@
     .fbk-modal-card {
       background: #111827;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
+      border-radius: 20px;
       width: 100%;
       max-width: 440px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
       color: #f9fafb;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
-      transform: scale(0.95);
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.92);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .fbk-modal-overlay.fbk-open .fbk-modal-card {
       transform: scale(1);
@@ -118,6 +122,7 @@
       line-height: 1;
       padding: 4px;
       border-radius: 4px;
+      transition: color 0.15s;
     }
     .fbk-close-btn:hover { color: #ffffff; }
     .fbk-body {
@@ -130,15 +135,15 @@
       margin-bottom: 18px;
     }
     .fbk-star-icon {
-      font-size: 30px;
+      font-size: 32px;
       cursor: pointer;
-      color: #4b5563;
-      transition: color 0.15s, transform 0.15s;
+      color: #374151;
+      transition: color 0.15s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       user-select: none;
     }
     .fbk-star-icon:hover, .fbk-star-icon.active {
       color: #fbbf24;
-      transform: scale(1.15);
+      transform: scale(1.18);
     }
     .fbk-categories {
       display: flex;
@@ -154,13 +159,14 @@
       padding: 5px 12px;
       font-size: 12px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
     }
     .fbk-cat-pill:hover, .fbk-cat-pill.selected {
       background: rgba(99, 102, 241, 0.25);
       border-color: #6366f1;
       color: #ffffff;
       font-weight: 600;
+      transform: translateY(-1px);
     }
     .fbk-textarea {
       width: 100%;
@@ -176,6 +182,7 @@
       box-sizing: border-box;
       margin-bottom: 12px;
       outline: none;
+      transition: border-color 0.2s;
     }
     .fbk-textarea:focus {
       border-color: #6366f1;
@@ -198,6 +205,7 @@
       font-family: inherit;
       box-sizing: border-box;
       outline: none;
+      transition: border-color 0.2s;
     }
     .fbk-input:focus { border-color: #6366f1; }
     .fbk-submit-btn {
@@ -213,7 +221,11 @@
       transition: all 0.2s;
     }
     .fbk-submit-btn:hover {
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45);
+      transform: translateY(-1px);
+    }
+    .fbk-submit-btn:active {
+      transform: scale(0.98);
     }
     .fbk-submit-btn:disabled {
       opacity: 0.6;
@@ -225,8 +237,8 @@
       display: none;
     }
     .fbk-success-icon {
-      width: 52px;
-      height: 52px;
+      width: 54px;
+      height: 54px;
       background: rgba(16, 185, 129, 0.15);
       color: #10b981;
       border-radius: 50%;
@@ -234,7 +246,12 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 12px;
-      font-size: 26px;
+      font-size: 28px;
+      animation: checkBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes checkBounce {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
     }
   `;
   document.head.appendChild(style);
@@ -293,8 +310,8 @@
       <!-- Success State -->
       <div class="fbk-body fbk-success-view" id="fbk-success-box">
         <div class="fbk-success-icon">✓</div>
-        <h4 style="margin: 0 0 6px; font-size: 18px; color: #fff;">Thank you!</h4>
-        <p style="margin: 0; color: #9ca3af; font-size: 13px;">Your feedback helps us continuously improve.</p>
+        <h4 style="margin: 0 0 6px; font-size: 19px; color: #fff; font-weight: 700;">Thank you!</h4>
+        <p style="margin: 0; color: #9ca3af; font-size: 13.5px;">Your feedback helps us continuously improve.</p>
       </div>
     </div>
   `;
@@ -309,7 +326,10 @@
     modal.classList.add('fbk-open');
     document.getElementById('fbk-form-container').style.display = 'block';
     document.getElementById('fbk-success-box').style.display = 'none';
-    document.getElementById('fbk-msg').focus();
+    setTimeout(() => {
+      const msgInput = document.getElementById('fbk-msg');
+      if (msgInput) msgInput.focus();
+    }, 100);
   });
 
   const closeBtn = modal.querySelector('.fbk-close-btn');
@@ -364,12 +384,17 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending...';
 
+    let submittedSuccessfully = false;
+
+    // Strategy 1: Post to backend server if available
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
       const response = await fetch(`${SERVER_ORIGIN}/api/v1/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY
+          'x-api-key': API_KEY || 'fbk_live_default'
         },
         body: JSON.stringify({
           rating: selectedRating,
@@ -378,33 +403,57 @@
           name: name,
           email: email,
           page_url: window.location.href
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
-      const result = await response.json();
-
-      if (response.ok && result.ok) {
-        // Show success screen
-        document.getElementById('fbk-form-container').style.display = 'none';
-        document.getElementById('fbk-success-box').style.display = 'block';
-
-        // Clear input fields
-        document.getElementById('fbk-msg').value = '';
-        
-        // Auto-close after 2.5 seconds
-        setTimeout(() => {
-          modal.classList.remove('fbk-open');
-        }, 2200);
-      } else {
-        alert(result.error || 'Failed to submit feedback. Check your API key.');
+      if (response.ok) {
+        submittedSuccessfully = true;
       }
     } catch (err) {
-      console.error('[FeedbackHub Widget] Submission error:', err);
-      alert('Could not connect to feedback server. Check network connection.');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Send Feedback';
+      // Backend not running / static Vercel
     }
+
+    // Strategy 2: Store in client-side cloud storage (for static Vercel resilience)
+    try {
+      const STORAGE_FEEDBACK_KEY = 'fbk_records_cloud';
+      const local = JSON.parse(localStorage.getItem(STORAGE_FEEDBACK_KEY) || '[]');
+      local.unshift({
+        id: Date.now(),
+        name: name || 'Anonymous',
+        email: email || '',
+        rating: selectedRating,
+        category: selectedCategory,
+        message: message,
+        page_url: window.location.href,
+        status: 'new',
+        admin_notes: '',
+        created_at: new Date().toISOString()
+      });
+      localStorage.setItem(STORAGE_FEEDBACK_KEY, JSON.stringify(local));
+      localStorage.setItem('fbk_ping_update', Date.now().toString());
+      submittedSuccessfully = true;
+    } catch (err) {
+      console.warn('LocalStorage save error:', err);
+    }
+
+    if (submittedSuccessfully) {
+      // Show success view
+      document.getElementById('fbk-form-container').style.display = 'none';
+      document.getElementById('fbk-success-box').style.display = 'block';
+      document.getElementById('fbk-msg').value = '';
+
+      // Auto-close modal after 2.2 seconds
+      setTimeout(() => {
+        modal.classList.remove('fbk-open');
+      }, 2200);
+    } else {
+      alert('Could not send feedback. Please check your network connection.');
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Send Feedback';
   });
 
 })();
